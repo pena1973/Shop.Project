@@ -1,0 +1,38 @@
+<!-- Библиотека express-ejs-layouts автоматически 
+найдёт этот файл и будет использовать его 
+в качестве базового HTML. -->
+
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>SHOP PROJECT</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css" />
+    <!--добавление шрифта для задачи 35.3.2-->
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/roboto">    
+    <!-- <link rel="stylesheet" href="css/style.css" /> -->
+    <link rel="stylesheet" href="/<%= process.env.ADMIN_PATH %>/css/style.css" />
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="logo"></div>
+        <!--35.4.1 ссылка logout-->
+           <div>
+            <a class="logout" href="<%= `/${process.env.ADMIN_PATH}/auth/logout` %>">LOGOUT</a>
+            
+            <form action="add" method="POST" >                    
+                <button type="submit" onclick="clickHandler" >Add new</button>
+            </form>
+           </div>
+          
+    </header>
+
+    <div class="container">
+        <%- body %>
+    </div>
+    
+</body>
+
+</html>
