@@ -5,6 +5,7 @@ import { initDataBase } from "./Server/services/db";
 import { initServer } from "./Server/services/server";
 import ShopAPI from "./Shop.API";
 import ShopAdmin from "./Shop.Admin";
+import ShopClient from "./Shop.Client";
 
 export let server: Express;
 export let connection: Connection;
@@ -24,7 +25,8 @@ function initRouter() {
   server.use("/admin", shopAdmin);
 
   server.use("/", (_, res) => {
-    res.send("React App1");
+    server.use("/", ShopClient);
+    // res.send("React App1");
   });
 }
 
