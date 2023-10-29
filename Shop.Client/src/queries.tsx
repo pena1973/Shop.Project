@@ -106,8 +106,8 @@ export const setNewComment = async (
   await axios(config)
     .then(response => {
       // console.log('Response', response.data)
-      const data: IComment = response.data;
-      doSuccessNewComment(data.id);
+      const data: string = response.data;
+      doSuccessNewComment(data);
     })
     .catch(e => {
       console.log('Error: ', e.message)

@@ -1,21 +1,22 @@
 import "./newCommentForm.css";
-import { IProduct } from '../redux/types'
+import { IComment, IProduct } from '../redux/types'
 import { useState, } from "react";
 import { useAppDispatch } from "../main";
 import { setComents } from '../redux/slices';
 import { setNewComment } from "../queries";
 export interface newCommentFormProps {
   product: IProduct
+  productComments:IComment[]
 }
 export const NewCommentForm = ({
-  product
+  product,productComments
 }: newCommentFormProps) => {
   const dispatch = useAppDispatch();
   const [body, setBody] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [commentId, setCommentId] = useState("");
+  // const [commentId, setCommentId] = useState("");
   
   const handleClick = () => {
     // валидация
@@ -34,13 +35,13 @@ export const NewCommentForm = ({
 
 
     // Обработка запросов к апи  
-    const doSuccessNewComment = (data: string) => {
-      setCommentId(data);
+    const doSuccessNewComment = (id: string) => {
+      // setCommentId(id);
       // прописали в компонент
       //  копи масив
-      const comments = JSON.parse(JSON.stringify(product.comments));
+      const comments = JSON.parse(JSON.stringify(productComments));
       comments.push({
-        id: commentId,
+        id: id,
         name: name,
         email: email,
         body: body,
@@ -58,7 +59,7 @@ export const NewCommentForm = ({
     setBody("");
     setName("");
     setEmail("");
-    setCommentId("");
+    // setCommentId("");
   }
 
   return (

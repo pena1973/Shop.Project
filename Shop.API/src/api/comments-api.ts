@@ -99,7 +99,7 @@ commentsRouter.post('/', async (
     );
 
     res.status(201);
-    res.send(`Comment id:${id} has been added!`);
+    res.send(id);
   } catch (e) {
     console.debug(e.message);
     res.status(500);

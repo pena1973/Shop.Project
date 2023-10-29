@@ -31,7 +31,7 @@ const doSuccessProduct = (data: IProduct) => {
   setProduct(data);
    dispatch(setComents(data.comments));
    dispatch(showLoadingProduct(false));
-   
+
 }
 const doErrorProduct = () => {
   dispatch(setComents([]));  
@@ -121,7 +121,7 @@ const comments = useSelector((state: RootState) => {
       <div className="line" ></div>
 
       {/* <!--ввод нового  коментария --> */}
-      {!loading && <NewCommentForm product={product} />}
+      {!loading && <NewCommentForm product={product} productComments = {comments} />}
 
       <div className="line" ></div>
 
