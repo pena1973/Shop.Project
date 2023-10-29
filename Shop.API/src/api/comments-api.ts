@@ -17,7 +17,7 @@ commentsRouter.get('/', async (req: Request, res: Response) => {
       "SELECT * FROM comments"
     );
 
-    res.setHeader('Content-Type', 'application/json');
+    // res.setHeader('Content-Type', 'application/json');
     res.send(mapCommentsEntity(comments));
   } catch (e) {
     console.debug(e.message);
@@ -53,7 +53,9 @@ async (req: Request<{ id: string }>, res: Response) => {
       return;
     }
 
-    res.setHeader('Content-Type', 'application/json');
+    // res.setHeader('Content-Type', 'application/json');
+    // res.setHeader("Access-Control-Allow-Origin", "*");
+    // res.setHeader("Access-Control-Allow-Headers", "*");
     res.send(mapCommentsEntity(rows)[0]);
   } catch (e) {
     console.debug(e.message);
@@ -66,8 +68,10 @@ commentsRouter.post('/', async (
   req: Request<{}, {}, CommentCreatePayload>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   const validationResult = validateComment(req.body);
-
+ 
   if (validationResult) {
     res.status(400);
     res.send(validationResult);

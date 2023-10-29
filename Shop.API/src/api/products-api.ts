@@ -4,24 +4,25 @@ import { v4 as uuidv4 } from 'uuid';
 import { OkPacket } from "mysql2";
 import { enhanceProductsComments, enhanceProductsImages, getProductsFilterQuery } from "../helpers";
 import {
-  ICommentEntity, 
+  ICommentEntity,
   ImagesRemovePayload,
   SimilarsRemovePayload,
   ProductAddSimilarPayload,
   IProductEntity,
-  IProductImageEntity,  
+  IProductImageEntity,
   IProductSearchFilter,
   ProductAddImagesPayload,
   ProductCreatePayload,
-  ISimilarEntity
+  ISimilarEntity,
+  CommentAddPayload,
 } from "../../types";
-import { mapCommentsEntity, mapImagesEntity, mapProductsEntity,mapSimilarsEntity } from "../services/mapping";
-import { 
-  DELETE_IMAGES_QUERY, 
-  INSERT_PRODUCT_IMAGES_QUERY, 
+import { mapCommentsEntity, mapImagesEntity, mapProductsEntity, mapSimilarsEntity } from "../services/mapping";
+import {
+  DELETE_IMAGES_QUERY,
+  INSERT_PRODUCT_IMAGES_QUERY,
   INSERT_PRODUCT_QUERY,
-  REPLACE_PRODUCT_THUMBNAIL, 
-  UPDATE_PRODUCT_FIELDS 
+  REPLACE_PRODUCT_THUMBNAIL,
+  UPDATE_PRODUCT_FIELDS
 } from "../services/queries";
 import { type } from "os";
 
@@ -38,6 +39,9 @@ const throwServerError = (res: Response, e: Error) => {
  * //http://localhost:3000/api/products/
  */
 productsRouter.get('/', async (req: Request, res: Response) => {
+  // Необходимо прописать для гет запросов потому что почему то общая настройка здесь не срабатывает
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const [productRows] = await connection.query<IProductEntity[]>("SELECT * FROM products");
     const [commentRows] = await connection.query<ICommentEntity[]>("SELECT * FROM comments");
@@ -47,6 +51,7 @@ productsRouter.get('/', async (req: Request, res: Response) => {
     const withComments = enhanceProductsComments(products, commentRows);
     const withImages = enhanceProductsImages(withComments, imageRows)
 
+    
     res.send(withImages);
   } catch (e) {
     throwServerError(res, e);
@@ -61,6 +66,8 @@ productsRouter.get('/search', async (
   req: Request<{}, {}, {}, IProductSearchFilter>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const [query, values] = getProductsFilterQuery(req.query);
     const [rows] = await connection.query<IProductEntity[]>(query, values);
@@ -76,7 +83,6 @@ productsRouter.get('/search', async (
     const products = mapProductsEntity(rows);
     const withComments = enhanceProductsComments(products, commentRows);
     const withImages = enhanceProductsImages(withComments, imageRows)
-
     res.send(withImages);
   } catch (e) {
     throwServerError(res, e);
@@ -92,6 +98,8 @@ productsRouter.get('/:id', async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const [rows] = await connection.query<IProductEntity[]>(
       "SELECT * FROM products WHERE product_id = ?",
@@ -124,8 +132,7 @@ productsRouter.get('/:id', async (
       product.images = mapImagesEntity(images);
       product.thumbnail = product.images.find(image => image.main) || product.images[0];
     }
-   
-console.log()
+
     res.send(product);
   } catch (e) {
     throwServerError(res, e);
@@ -139,6 +146,8 @@ productsRouter.post('/', async (
   req: Request<{}, {}, ProductCreatePayload>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const { title, description, price, images } = req.body;
     const productId = uuidv4();
@@ -151,9 +160,8 @@ productsRouter.post('/', async (
       const values = images.map((image) => [uuidv4(), image.url, productId, image.main]);
       await connection.query<OkPacket>(INSERT_PRODUCT_IMAGES_QUERY, [values]);
     }
-
     res.status(201);
-    res.send({productId:productId,message:`Product with id:${productId} have been added!`});
+    res.send({ productId: productId, message: `Product with id:${productId} have been added!` });
   } catch (e) {
     throwServerError(res, e);
   }
@@ -168,6 +176,8 @@ productsRouter.delete('/:id', async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const [rows] = await connection.query<IProductEntity[]>(
       "SELECT * FROM products WHERE product_id = ?",
@@ -179,21 +189,17 @@ productsRouter.delete('/:id', async (
       res.send(`Product with id ${req.params.id} is not found`);
       return;
     }
-
-    await connection.query<OkPacket>(
-      "DELETE FROM images WHERE product_id = ?",
-      [req.params.id]
-    );
-
-    await connection.query<OkPacket>(
-      "DELETE FROM comments WHERE product_id = ?",
-      [req.params.id]
-    );
-
-    await connection.query<OkPacket>(
-      "DELETE FROM products WHERE product_id = ?",
-      [req.params.id]
-    );
+    
+    await connection.query<OkPacket>("DELETE FROM images WHERE product_id = ?", [req.params.id]);
+    
+    await connection.query<OkPacket>("DELETE FROM comments WHERE product_id = ?", [req.params.id]);
+    
+    // очищаю все таблицы которые могут быть с этим связаны
+    await connection.query<OkPacket>("DELETE FROM similars WHERE similar_id = ?", [req.params.id]);
+    await connection.query<OkPacket>("DELETE FROM similars WHERE product_id = ?", [req.params.id]);
+    
+    await connection.query<OkPacket>("DELETE FROM products WHERE product_id = ?", [req.params.id]);
+   
 
     res.status(200);
     res.end();
@@ -208,7 +214,9 @@ productsRouter.delete('/:id', async (
 productsRouter.post('/add-images', async (
   req: Request<{}, {}, ProductAddImagesPayload>,
   res: Response
-) => {
+) => { 
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const { productId, images } = req.body;
 
@@ -230,12 +238,14 @@ productsRouter.post('/add-images', async (
 
 //  удаление коментов конкретного продукта из таблицы comments
 productsRouter.post('/remove-comments/:id', async (
-  req: Request<{ id: string } >,
+  req: Request<{ id: string }>,
   res: Response
 ) => {
-  try {    
-    const [info] = await connection.query<OkPacket>("DELETE FROM comments WHERE product_id = ?",  [req.params.id]);
- // удаляю проверку потому что она мешает при удалении продукта целиком
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  try {
+    const [info] = await connection.query<OkPacket>("DELETE FROM comments WHERE product_id = ?", [req.params.id]);
+    // удаляю проверку потому что она мешает при удалении продукта целиком
     // if (info.affectedRows === 0) {
     //   res.status(404);
     //   res.send("No one comment has been removed");
@@ -250,12 +260,13 @@ productsRouter.post('/remove-comments/:id', async (
 
 //  удаление списка изображений конкретного продукта из таблицы images
 productsRouter.post('/remove-images/:id', async (
-  req: Request<{ id: string } >,
+  req: Request<{ id: string }>,
   res: Response
 ) => {
-  try {    
-    const [info] = await connection.query<OkPacket>("DELETE FROM images WHERE product_id = ?",  [req.params.id]);
-   // удаляю проверку потому что она мешает при удалении продукта целиком
+  
+  try {
+    const [info] = await connection.query<OkPacket>("DELETE FROM images WHERE product_id = ?", [req.params.id]);
+    // удаляю проверку потому что она мешает при удалении продукта целиком
     // if (info.affectedRows === 0) {
     //   res.status(404);
     //   res.send("No one image has been removed");
@@ -273,6 +284,7 @@ productsRouter.post('/remove-images', async (
   req: Request<{}, {}, ImagesRemovePayload>,
   res: Response
 ) => {
+  
   try {
     const imagesToRemove = req.body;
 
@@ -305,6 +317,7 @@ productsRouter.post('/update-thumbnail/:id', async (
   req: Request<{ id: string }, {}, { newThumbnailId: string }>,
   res: Response
 ) => {
+  
   try {
     /**
      *  проверяем наличие у данного товара обложки,
@@ -363,6 +376,7 @@ productsRouter.patch('/:id', async (
   req: Request<{ id: string }, {}, ProductCreatePayload>,
   res: Response
 ) => {
+ 
   try {
     const { id } = req.params;
 
@@ -408,10 +422,12 @@ productsRouter.get('/similars/:id', async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
-  try {   
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  try {
     // похожие товары
-      const [rows] = await connection.query<ISimilarEntity[]>(           
-      "SELECT * from similars where product_id = ? ORDER BY title", 
+    const [rows] = await connection.query<ISimilarEntity[]>(
+      "SELECT * from similars where product_id = ? ORDER BY title",
       [req.params.id]
     );
 
@@ -429,9 +445,11 @@ productsRouter.get('/others/:id', async (
   req: Request<{ id: string }>,
   res: Response
 ) => {
- try {  
- const text_query = 
- `SELECT 
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  try {
+    const text_query =
+      `SELECT 
  products.product_id as product_id,
  products.title as title,
  products.description as description,
@@ -443,11 +461,11 @@ productsRouter.get('/others/:id', async (
  where row_id is null
  ORDER BY products.title`
 
-//  LEFT JOIN (SELECT * FROM similars where product_id = "${req.params.id}") as similars
+    //  LEFT JOIN (SELECT * FROM similars where product_id = "${req.params.id}") as similars
 
     const [rows] = await connection.query<IProductEntity[]>(
-    text_query,
-    [req.params.id, req.params.id]
+      text_query,
+      [req.params.id, req.params.id]
     );
 
     if (!rows?.[0]) {
@@ -468,11 +486,13 @@ productsRouter.post('/remove-similars/:id', async (
   req: Request<{ id: string }, {}, SimilarsRemovePayload>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
 
-    const similarsToRemove = req.body;  
-    const productId = req.params.id;    
-    const [info] = await connection.query<OkPacket>(`DELETE FROM similars where product_id = ? and similar_id IN ?`, [productId,[similarsToRemove]]);    
+    const similarsToRemove = req.body;
+    const productId = req.params.id;
+    const [info] = await connection.query<OkPacket>(`DELETE FROM similars where product_id = ? and similar_id IN ?`, [productId, [similarsToRemove]]);
 
     if (info.affectedRows === 0) {
       res.status(404);
@@ -492,10 +512,12 @@ productsRouter.post('/remove-all-similars/:id', async (
   req: Request<{ id: string }, {}, {}>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
 
     const productId = req.params.id;
-    const [info] = await connection.query<OkPacket>( `DELETE FROM similars where product_id = ?`,[productId]);
+    const [info] = await connection.query<OkPacket>(`DELETE FROM similars where product_id = ?`, [productId]);
     // удаляю проверку потому что она мешает при удалении продукта целиком
     // if (info.affectedRows === 0) {
     //   res.status(404);
@@ -517,26 +539,28 @@ productsRouter.post('/add-similar', async (
   req: Request<{}, {}, ProductAddSimilarPayload>,
   res: Response
 ) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
   try {
     const similarsToAdd = req.body;
-    
+
     if (!similarsToAdd?.length) {
       res.status(400);
       res.send("Simmilar array is empty");
       return;
-    }  
+    }
 
-   const similarsID = similarsToAdd.map(item => item.similarId);  
-    
-// далее запрашиваю из базы данные по всем похожим продуктам для доп информации по ним
-    const [productsRows] = await connection.query<IProductEntity[]>("SELECT * FROM products where product_id IN ?",  [[similarsID]]);
+    const similarsID = similarsToAdd.map(item => item.similarId);
+
+    // далее запрашиваю из базы данные по всем похожим продуктам для доп информации по ним
+    const [productsRows] = await connection.query<IProductEntity[]>("SELECT * FROM products where product_id IN ?", [[similarsID]]);
 
     // создаю строки для вставки
     const values = similarsToAdd.map((item) => {
-      let similar = productsRows.find((element)=>(element.product_id=item.similarId))
+      let similar = productsRows.find((element) => (element.product_id = item.similarId))
       return [uuidv4(), similar.title, similar.description, similar.price, item.productId, item.similarId]
     });
-    
+
     await connection.query<OkPacket>("INSERT INTO similars (row_id, title, description, price, product_id, similar_id) VALUES ?", [values]);
 
     res.status(201);
@@ -546,14 +570,51 @@ productsRouter.post('/add-similar', async (
   }
 });
 
-  // similars(
-	// 		row_id VARCHAR(36) NOT NULL,          
-  //           title  VARCHAR(255) NOT NULL,
-  //           description  VARCHAR(255) NOT NULL,
-  //           price DECIMAL(10, 2) NOT NULL,
-  //           product_id VARCHAR(36) NOT NULL,
-  //           similar_id VARCHAR(36) NOT NULL,
-  //           PRIMARY KEY (row_id),
-  //           FOREIGN KEY (product_id) REFERENCES products(product_id),
-  //           FOREIGN KEY (similar_id) REFERENCES products(product_id)
-  //       );
+
+// // метод добавления коментария;
+// productsRouter.post('/add-comment/:id', async (
+//   req: Request<{ id: string }, {}, CommentAddPayload>,  
+//   res: Response
+// ) => {
+
+//   res.setHeader('Content-Type', 'application/json');
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader("Access-Control-Allow-Methods","PUT, POST, GET, DELETE, PATCH, OPTIONS");
+//   try {
+//     const commentToAdd = req.body;
+
+//     if (!commentToAdd) {
+//       res.status(400);
+//       res.send("Comment is empty");
+//       return;
+//     }
+
+//     const values = [[
+//        req.params.id,
+//        commentToAdd.name,
+//        commentToAdd.email,
+//        commentToAdd.body,
+//        uuidv4()
+//     ]]
+
+//     await connection.query<OkPacket>("INSERT INTO comments (product_id, name, email, body, comment_id) VALUES ?", [values]);
+   
+//     res.status(201);
+//     res.send(commentToAdd);
+//   } catch (e) {
+//     throwServerError(res, e);
+//   }
+// });
+
+
+// similars(
+// 		row_id VARCHAR(36) NOT NULL,
+//           title  VARCHAR(255) NOT NULL,
+//           description  VARCHAR(255) NOT NULL,
+//           price DECIMAL(10, 2) NOT NULL,
+//           product_id VARCHAR(36) NOT NULL,
+//           similar_id VARCHAR(36) NOT NULL,
+//           PRIMARY KEY (row_id),
+//           FOREIGN KEY (product_id) REFERENCES products(product_id),
+//           FOREIGN KEY (similar_id) REFERENCES products(product_id)
+//       );

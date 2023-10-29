@@ -2,13 +2,13 @@ import { Router, Request, Response } from "express";
 import { getProducts,searchProducts,getProduct,removeProduct,updateProduct, getOthers,getSimilars,addProduct} from "../models/products.model";
 import {IProductFilterPayload} from '@Shared/types'
 export const productsRouter = Router();
-import {IProductEditData} from "../types";
+import {IProductEditData,IProductCreateData} from "../types";
 
 import {throwServerError} from './helper'
 
 function clickHandler(){
     
-    console.log(1);
+    // console.log(1);
 }
 
 productsRouter.get('/', async (req: Request, res: Response) => {
@@ -72,9 +72,7 @@ productsRouter.get('/remove-product/:id', async (
     req: Request<{ id: string }>,
     res: Response
 ) => {
-    try {
-        //   35.4.3
-        //   запрет на удаление товара любым пользователям, кроме admin
+    try {      
         if (req.session.username !== "admin") {
             res.status(403);
             res.send("Forbidden");
@@ -116,14 +114,14 @@ productsRouter.post('/add', async (
 
 // обработка заполненной формы
 productsRouter.post('/addNewProduct', async (
-    req: Request<{}, {}, IProductEditData>,
+    req: Request<{}, {}, IProductCreateData>,
     res: Response
 ) => {
     // console.log(11);
     // считываем из формы, постим в базу и возвращаемся  в полную форму редактирования
     try {
         const product = await addProduct(req.body);
-        console.log(product);
+        // console.log(product);
         const others = await getOthers(product.id);
         const similars = await getSimilars(product.id);
 

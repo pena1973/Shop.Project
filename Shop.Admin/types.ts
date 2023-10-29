@@ -15,3 +15,10 @@ export interface IProductEditData {
     similarsToRemove: string | string[];
     newSimilars?: string | string[];
 }
+
+export interface IProductCreateData {
+  title: string;
+  description: string;
+  price: string;
+  newImages: string;  
+}

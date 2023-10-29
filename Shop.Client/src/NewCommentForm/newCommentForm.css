@@ -1,0 +1,71 @@
+/* <!--ввод нового  коментария --> */
+.new-coment {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: start;
+    border: 0.2px solid rgba(114, 115, 117,.5);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.new-comvent-label {
+    font-size: 1rem;
+    color: rgba(0, 0, 0, 0.9);
+    font-weight: bold;
+    width: 60px;
+    flex-direction: row;
+}
+
+.new-comvent-title {
+    width: 520px;
+    height: 40px;
+    border-radius: 5px;
+    border: 0.5px solid rgb(114, 115, 117);
+    font-size: 1rem;
+    color: rgba(0, 0, 0, 0.9);
+    outline: none;
+    border-radius: 5px;
+}
+
+.new-comvent-mail {
+    width: 220px;
+    height: 40px;
+    border-radius: 5px;
+    border: 0.5px solid rgb(114, 115, 117);
+    font-size: 1rem;
+    color: rgba(0, 0, 0, 0.9);
+    outline: none;
+}
+
+.new-comvent-text {
+    width: 580px;
+    height: 100px;
+    border-radius: 5px;
+    border: 0.5px solid rgb(114, 115, 117);
+    font-size: 1rem;
+    color: rgba(0, 0, 0, 0.9);
+    outline: none;
+}
+
+.btn-add-coment {
+    width: 110px;
+    height: 40px;
+    border-radius: 50px;
+    text-decoration: none;
+    color: #3b3c3d;
+    outline: none;
+    border: 0.5px solid rgb(114, 115, 117);
+    background: linear-gradient(rgba(163, 164, 167, 0.5), rgba(235, 236, 238, 0.5) 48%, rgba(241, 242, 245, 0.5) 52%, rgba(215, 215, 216, 0.5));
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 15px;
+}
+.btn-add-coment:hover {
+    box-shadow: inset 0 -1px 1px rgba(249, 250, 250, 0.3), inset 0 1px 2px rgba(197, 206, 212, 0.4), inset 0 0 0 60px rgba(217, 227, 231, 0.5);
+}
+
+.error{
+    color: #da4518;
+    padding: 5px;
+}

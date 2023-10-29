@@ -46,11 +46,12 @@
             <% }); %>
         </div>
     <% } %>
-    <hr></hr>
+    
     
     <!-- похожие -->
     
     <% if (item.similars?.length) { %>
+        <hr></hr>
        <h2>Similar products</h2>
         <div class="product-edit-similars">
         <% item.similars.forEach(function(product) { %>                        
@@ -59,10 +60,11 @@
         </div>
     <% } %>
 
-    <hr></hr>
+ 
 
     <!-- потенциально похожие -->
      <% if (item.others?.length) { %>
+        <hr></hr>
         <h2>Other products</h2>
          <div class="product-edit-others">
          <% item.others.forEach(function(product) { %>                        
@@ -73,7 +75,10 @@
 
     <div class="product-edit-footer">
         <button class="save_button" type="submit">Save changes</button>
+        &nbsp;
         <a href="<%= `remove-product/${item.product.id}` %>">Delete product</a>
+        &nbsp;
+        <a href="<%= `/admin` %>">Back to products</a>
     </div>
     
 </form>

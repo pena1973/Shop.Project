@@ -1,6 +1,6 @@
 import axios, { Axios, AxiosResponse } from "axios";
 import { IProduct, IProductFilterPayload } from "@Shared/types";
-import { IProductEditData } from "../types"
+import { IProductEditData,IProductCreateData } from "../types"
 import { type } from "os";
 // import { randomUUID } from "crypto";
 
@@ -64,13 +64,14 @@ export async function getSimilars(
 export async function removeProduct(id: string): Promise<void> {
     // Сначала удалим связи
     // похожие
-    await axios.post(`${host}/products/remove-all-similars/${id}`);
-    // коменты
-    await axios.post(`${host}/products/remove-comments/${id}`);
-    // рисунки
-    await axios.post(`${host}/products/remove-images/${id}`);
+    // await axios.post(`${host}/products/remove-all-similars/${id}`);
+    // // коменты
+    // await axios.post(`${host}/products/remove-comments/${id}`);
+    // // рисунки
+    // await axios.post(`${host}/products/remove-images/${id}`);
     // продукт
     await axios.delete(`${host}/products/${id}`);
+    
 }
 
 //   с помощью регулярного выражения мы разбиваем строку на части по разрыву строки или запятой,
@@ -194,15 +195,33 @@ export async function updateProduct(
 }
 
 export async function addProduct(
-    formData: IProductEditData
+    formData: IProductCreateData
 ): Promise<IProduct | null> {
+ 
     try {
+        
+        let images;
         let id;
+        
+        // еслои есть необходимо преобразовать рисунки в нужный формат
+        // превращаем строку с массив строк
+        
+        if (!(!formData.newImages))
+        {const urls = splitNewImages(formData.newImages);
+
+        images = urls.map(url => ({ url, main: false }));
+        //   первое изображение из массива images мы установим как обложку товара
+        images[0].main = true;}
+
         // Постим в базу        
-        await axios.post(`${host}/products`, formData)
+        await axios.post(`${host}/products`, {
+            title: formData.title, 
+            description: formData.description, 
+            price: formData.price,             
+            images: images
+        })
             .then(function (response) {
                 id = response.data.productId;
-
             })
             .catch(function (error) {
                 return error;

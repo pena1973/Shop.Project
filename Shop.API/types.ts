@@ -60,6 +60,7 @@ export interface ProductAddImagesPayload {
   images: ImageCreatePayload[];
 }
 export type ProductAddSimilarPayload = { productId: string; similarId: string;}[]
+export type CommentAddPayload = { productId: string; commentId: string; name: string, email: string,body: string}
 
 export type ImagesRemovePayload = string[];
 export type SimilarsRemovePayload = string[];
